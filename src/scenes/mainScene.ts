@@ -5,6 +5,7 @@ export default class mainScene extends Phaser.Scene{
     colorTiles: Array<string>=["RED_1","BLUE_1","PURPLE_1","YELLOW_1","GREEN_1"];
     afterClick=false;
     selectedTiles;
+    pointer;
 	constructor()
 	{
 		super('hello-world');
@@ -26,6 +27,7 @@ export default class mainScene extends Phaser.Scene{
 
     create()
     {
+        this.pointer = this.input.activePointer;
         this.selectedTiles=new Tiles(this,0,0,'',0.49);
         this.input.mouse.disableContextMenu();
         var initX=45;
@@ -46,37 +48,33 @@ export default class mainScene extends Phaser.Scene{
         }
     }
     update(time: number, delta: number): void {
-        var pointer = this.input.activePointer;
-            if(!pointer.isDown && this.afterClick){ 
-                var totalTiles: Array<Tiles>= new Array<Tiles>();
-                for(var value of this.arrTiles){   
-                    if(value.texture.key.slice(-1)=='2'){
-                        value.setTexture(value.color.replace(/2$/,"1"));
-                        totalTiles.push(value);
-                    }
-                }
-                if(totalTiles.length>=3){
-                    for(var value of totalTiles){ 
-                        this.children.list[this.children.list.indexOf(value)].destroy();
-                        console.log("a");
-                    }
-                }else{
-                    totalTiles.splice(0);
-                    console.log(totalTiles.length);
-                }
-                this.afterClick=false;
+        if(!this.pointer.isDown && this.afterClick){ 
+            var totalTiles: Array<Tiles>= new Array<Tiles>();
+            for(var value of this.arrTiles){   
+                this.selectTilesCheck(value,totalTiles);
             }
-            if(pointer.isDown){
-                this.afterClick=true;
-            }
+            this.destroyTilesOrNot(totalTiles);
+            this.afterClick=false;
         }
-        checkTiles(color){
-            if(color.slice(-1)==="2"){
-                return true
-            }else{
-                return false
+        if(this.pointer.isDown){
+            this.afterClick=true;
+        }
+    }
+    selectTilesCheck(value, totalTiles){
+        if(value.texture.key.slice(-1)=='2'){
+            value.setTexture(value.color.replace(/2$/,"1"));
+            totalTiles.push(value);
+        }
+    }
+    destroyTilesOrNot(totalTiles){
+        if(totalTiles.length>=3){
+            for(var value of totalTiles){ 
+                this.children.list[this.children.list.indexOf(value)].destroy();
             }
-        }  
+        }else{
+            totalTiles.splice(0);
+        }
+    }  
 }
     
 export class Tiles extends Phaser.GameObjects.Image{ 
