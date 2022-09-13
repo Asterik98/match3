@@ -6,6 +6,7 @@ export default class mainScene extends Phaser.Scene{
     afterClick=false;
     selectedTiles;
     pointer;
+    follower;path;graphics;lemming;
 	constructor()
 	{
 		super('hello-world');
@@ -42,10 +43,11 @@ export default class mainScene extends Phaser.Scene{
                 }
             } 
         }
-        for(var value in this.arrTiles)
+        for(var value of this.arrTiles)
         { 
-            this.children.add(this.arrTiles[value]);
+            this.children.add(value);
         }
+        
     }
     update(time: number, delta: number): void {
         if(!this.pointer.isDown && this.afterClick){ 
@@ -55,10 +57,22 @@ export default class mainScene extends Phaser.Scene{
             }
             this.destroyTilesOrNot(totalTiles);
             this.afterClick=false;
+            //this.coba();
         }
         if(this.pointer.isDown){
             this.afterClick=true;
         }
+        
+    }
+    coba(){
+        this.graphics.clear();
+        this.graphics.lineStyle(2, 0xffffff, 1);
+
+        this.path.draw(this.graphics);
+
+        this.path.getPoint(this.follower.t, this.follower.vec);
+        this.graphics.fillStyle(0xff0000, 1);
+        this.graphics.fill;
     }
     selectTilesCheck(value, totalTiles){
         if(value.texture.key.slice(-1)=='2'){
@@ -68,7 +82,19 @@ export default class mainScene extends Phaser.Scene{
     }
     destroyTilesOrNot(totalTiles){
         if(totalTiles.length>=3){
-            for(var value of totalTiles){ 
+            for(var value of totalTiles){
+                this.graphics = this.add.graphics();
+                this.path = new Phaser.Curves.Path(value.x,value.y);
+                this.path.lineTo(200, 0);
+                this.graphics.lineStyle(1, 0xffffff, 1);
+                this.lemming = this.add.follower(this.path, value.x, value.y, value.texture);
+                this.lemming.scale=0.49;
+                this.lemming.startFollow({
+                    duration: 1000,
+                    yoyo: false,
+                    repeat: 0,
+                    rotateToPath: true
+                });        
                 this.children.list[this.children.list.indexOf(value)].destroy();
             }
         }else{
