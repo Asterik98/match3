@@ -1,4 +1,4 @@
-import Phaser from 'phaser'
+import Phaser, { Textures } from 'phaser'
 
 export default class mainScene extends Phaser.Scene{
     arrTiles: Array<Tiles>= new Array<Tiles>();
@@ -51,54 +51,48 @@ export default class mainScene extends Phaser.Scene{
     }
     update(time: number, delta: number): void {
         if(!this.pointer.isDown && this.afterClick){ 
-            var totalTiles: Array<Tiles>= new Array<Tiles>();
+            var selectedTiles: Array<Tiles>= new Array<Tiles>();
+            var dropTiles: Array<Tiles>= new Array<Tiles>();
             for(var value of this.arrTiles){   
-                this.selectTilesCheck(value,totalTiles);
+                this.selectTilesCheck(value,selectedTiles,dropTiles);
             }
-            this.destroyTilesOrNot(totalTiles);
+            this.destroyTilesOrNot(selectedTiles);
             this.afterClick=false;
-            //this.coba();
         }
         if(this.pointer.isDown){
             this.afterClick=true;
         }
         
     }
-    coba(){
-        this.graphics.clear();
-        this.graphics.lineStyle(2, 0xffffff, 1);
-
-        this.path.draw(this.graphics);
-
-        this.path.getPoint(this.follower.t, this.follower.vec);
-        this.graphics.fillStyle(0xff0000, 1);
-        this.graphics.fill;
-    }
-    selectTilesCheck(value, totalTiles){
+    selectTilesCheck(value, selectedTiles,dropTiles){
         if(value.texture.key.slice(-1)=='2'){
             value.setTexture(value.color.replace(/2$/,"1"));
-            totalTiles.push(value);
+            selectedTiles.push(value);
+            for(var v of this.arrTiles){
+                if(v.x===value.x&&v.y>value.y){
+                    dropTiles.push(v);
+                }
+            }
         }
     }
-    destroyTilesOrNot(totalTiles){
-        if(totalTiles.length>=3){
-            for(var value of totalTiles){
+    destroyTilesOrNot(selectedTiles){
+        if(selectedTiles.length>=3){
+            for(var value of selectedTiles){
                 this.graphics = this.add.graphics();
-                this.path = new Phaser.Curves.Path(value.x,value.y);
-                this.path.lineTo(200, 0);
-                this.graphics.lineStyle(1, 0xffffff, 1);
-                this.lemming = this.add.follower(this.path, value.x, value.y, value.texture);
-                this.lemming.scale=0.49;
-                this.lemming.startFollow({
-                    duration: 1000,
-                    yoyo: false,
-                    repeat: 0,
-                    rotateToPath: true
-                });        
-                this.children.list[this.children.list.indexOf(value)].destroy();
+                this.graphics.lineStyle(1, 0xffffff, 1);       
+                //this.children.list[this.children.list.indexOf(value)].destroy();
             }
+            this.tweens.add({
+                targets:selectedTiles,
+                x: 200,
+                y: 0,
+                duration:500,
+                onComplete: function () { 
+                    selectedTiles.splice(0);
+                },
+            }); 
         }else{
-            totalTiles.splice(0);
+            selectedTiles.splice(0);
         }
     }  
 }
