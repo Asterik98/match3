@@ -6,7 +6,6 @@ export default class mainScene extends Phaser.Scene{
     afterClick=false;
     selectedTiles;
     pointer;
-    follower;path;graphics;lemming;
 	constructor()
 	{
 		super('hello-world');
@@ -77,11 +76,6 @@ export default class mainScene extends Phaser.Scene{
     }
     destroyTilesOrNot(selectedTiles){
         if(selectedTiles.length>=3){
-            for(var value of selectedTiles){
-                this.graphics = this.add.graphics();
-                this.graphics.lineStyle(1, 0xffffff, 1);       
-                //this.children.list[this.children.list.indexOf(value)].destroy();
-            }
             this.tweens.add({
                 targets:selectedTiles,
                 x: 200,
