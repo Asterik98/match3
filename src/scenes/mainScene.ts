@@ -1,4 +1,4 @@
-import Phaser, { Textures } from 'phaser'
+import Phaser, { Textures, Tweens } from 'phaser'
 
 export default class mainScene extends Phaser.Scene{
     arrTiles: Array<Tiles>= new Array<Tiles>();
@@ -82,7 +82,9 @@ export default class mainScene extends Phaser.Scene{
                 y: 0,
                 duration:500,
                 onComplete: function () { 
-                    selectedTiles.splice(0);
+                    for(var obj of selectedTiles){
+                        obj.destroy();
+                     }
                 },
             }); 
         }else{
