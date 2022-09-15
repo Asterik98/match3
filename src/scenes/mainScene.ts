@@ -70,8 +70,7 @@ export default class mainScene extends Phaser.Scene{
               // remember Starting Color
               currentColor = gameObject[0].texture.key.slice(0,-2);
               currentPath.push(gameObject[0]);
-              path.curves.length = 0;
-              path.startPoint=gameObject[0];
+              path=new Phaser.Curves.Path(gameObject[0].x,gameObject[0].y);
               pathGraphics.visible=true;
               currentPath[currentPath.length-1].setTexture(currentColor+"_2");
         });
@@ -90,7 +89,6 @@ export default class mainScene extends Phaser.Scene{
             if(pointer.isDown){
                 if(gameObject[0] && gameObject[0].texture.key.includes(currentColor)&& Math.abs(gameObject[0].x-currentPath[currentPath.length-1].x)/35<=1 && Math.abs(gameObject[0].y-currentPath[currentPath.length-1].y)/43<=1){
                     if(currentPath.indexOf(gameObject[0])===-1){
-                        console.log('a');
                         groupPath.push(currentPath[currentPath.length-1]);
                         currentPath.push(gameObject[0]);
                         currentPath[currentPath.length-1].setTexture(currentColor+"_2");
@@ -118,17 +116,11 @@ export default class mainScene extends Phaser.Scene{
     update(time: number, delta: number): void {
         if(!this.pointer.isDown && this.afterClick){ 
             var selectedTiles: Array<Tiles>= new Array<Tiles>();
-            var dropTiles: Array<Tiles>= new Array<Tiles>();
-            var deepestSelTiles: Array<Tiles>= new Array<Tiles>();
-            var deepestDropTiles: Array<Tiles>= new Array<Tiles>();
             for(var value of this.arrTiles.list){   
                 this.selectTilesCheck(value,selectedTiles);
             }
             if(selectedTiles.length>=3){
-                this.dropTilesGroup(selectedTiles,dropTiles);
-                this.deepestSelectedTilesPosition(selectedTiles,deepestSelTiles);
-                this.deepestDropTilesPosition(dropTiles,deepestDropTiles);
-                this.destroyTilesOrNot(selectedTiles,dropTiles,deepestSelTiles,deepestDropTiles);
+                this.destroyTilesOrNot(selectedTiles,this.arrTiles.list);
             }else{
                 selectedTiles.splice(0);
             }
@@ -145,73 +137,26 @@ export default class mainScene extends Phaser.Scene{
             selectedTiles.push(value);
         }
     }
-    dropTilesGroup(selectedTiles,dropTiles){
-        for(var s of selectedTiles){
-            for(var v of this.arrTiles.list){
-                if(v.x===s.x && v.y < s.y){
-                    if(selectedTiles.indexOf(v)==-1&&dropTiles.indexOf(v)==-1)
-                        dropTiles.push(v);   
-                }
-            }
-        }    
-    }
-    deepestSelectedTilesPosition(selectedTiles,deepestSelTiles){
-        for(var s of selectedTiles){
-            const checkTiles=deepestSelTiles.filter((obj) => {
-                return obj.x === s.x;
-                });
-            if(checkTiles.length!=0){
-                for(var a of checkTiles){
-                    if(a.y<s.y){
-                        deepestSelTiles.pop(a);
-                        deepestSelTiles.push(s)
-                    }
-                }
-            }else{
-                deepestSelTiles.push(s);
-            }
-        }
-    }
-    deepestDropTilesPosition(dropTiles,deepestDropTiles){
-        for(var s of dropTiles){
-            const checkTiles=deepestDropTiles.filter((obj) => {
-                return obj.x === s.x;
-                });
-            if(checkTiles.length!=0){
-                for(var a of checkTiles){
-                    if(a.y<s.y){
-                        deepestDropTiles.pop(a);
-                        deepestDropTiles.push(s)
-                    }
-                }
-            }else{
-                deepestDropTiles.push(s);
-            }
-        }
-    }
-    destroyTilesOrNot(selectedTiles,dropTiles,deepestSelTiles,deepestDropTiles){
-        var posY;
-        for(var tile of dropTiles){
-            for(var deepDrop of deepestDropTiles){
-                if(deepDrop.x==tile.x){
-                    for(var deepSel of deepestSelTiles){
-                        if(deepDrop.x==deepSel.x){
-                            posY='+='+ (deepSel.y-deepDrop.y).toString();  
-                        }
-                    }
+
+    destroyTilesOrNot(selectedTiles,arrTiles){
+        var posY=0;
+        for(var tile of arrTiles){
+            for(var sel of selectedTiles){
+                if(tile.x===sel.x && tile.y<sel.y && tile.visible===true){
+                    posY=posY+43
                 }
             }
             var dropTween=this.tweens.add({
-                targets:this.arrTiles.list[this.arrTiles.list.indexOf(tile)],
-                y:posY,
+                targets:tile,
+                y:'+='+posY.toString(),
                 duration:500,
                 delay:500,
                 onComplete:function(){
                     selectedTiles.splice(0);
-                    dropTiles.splice(0);
                     dropTween.stop();
                 }
             });
+            posY=0;
         }
         for(var tile of selectedTiles){
             this.tweens.add({
@@ -221,8 +166,9 @@ export default class mainScene extends Phaser.Scene{
                 duration:500,
                 onComplete: function (this) { 
                     for(var obj of selectedTiles){
-                        obj.destroy();
+                        obj.visible=false;
                     }
+
                     dropTween.resume();
                 }
             });
