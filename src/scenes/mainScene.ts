@@ -56,7 +56,7 @@ export default class mainScene extends Phaser.Scene{
                 }
                 var frame = tileSprite.frame;
                 var hitArea = new Phaser.Geom.Rectangle(frame.x, frame.y, frame.width, frame.height);
-                tileSprite.setScale(0.49).setInteractive(hitArea,Phaser.Geom.Rectangle.Contains).setOrigin(0);
+                tileSprite.setScale(0.49).setInteractive(hitArea,Phaser.Geom.Rectangle.Contains);
                 this.arrTiles.add(tileSprite);
             } 
         }
@@ -120,7 +120,7 @@ export default class mainScene extends Phaser.Scene{
                 this.selectTilesCheck(value,selectedTiles);
             }
             if(selectedTiles.length>=3){
-                this.destroyTilesOrNot(selectedTiles,this.arrTiles.list);
+                this.dropAndInitNewTiles(selectedTiles,this.arrTiles.list);
             }else{
                 selectedTiles.splice(0);
             }
@@ -138,12 +138,12 @@ export default class mainScene extends Phaser.Scene{
         }
     }
 
-    destroyTilesOrNot(selectedTiles,arrTiles){
+    dropAndInitNewTiles(selectedTiles,arrTiles){
         var posY=0;
         for(var tile of arrTiles){
             for(var sel of selectedTiles){
                 if(tile.x===sel.x && tile.y<sel.y && tile.visible===true){
-                    posY=posY+43
+                    posY=posY+43;
                 }
             }
             var dropTween=this.tweens.add({
@@ -160,7 +160,7 @@ export default class mainScene extends Phaser.Scene{
         }
         for(var tile of selectedTiles){
             this.tweens.add({
-                targets:this.arrTiles.list[this.arrTiles.list.indexOf(tile)],
+                targets:tile,
                 x: 200,
                 y: 0,
                 duration:500,
@@ -173,8 +173,26 @@ export default class mainScene extends Phaser.Scene{
                 }
             });
         }
-    } 
+        /*for(var tile of selectedTiles){
+            
+            this.tweens.add({
+                targets:this.arrTiles.list[this.arrTiles.list.indexOf(tile)],
+                x: 200,
+                y: 0,
+                duration:500,
+                onComplete: function (this) { 
+                    for(var obj of selectedTiles){
+                        obj.visible=false;
+                    }
+
+                    dropTween.resume();
+                }
+            });*/
+        }
+
+    }
 }
+ 
     
 export class Tiles extends Phaser.GameObjects.Image{ 
 
