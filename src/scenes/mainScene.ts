@@ -40,19 +40,19 @@ export default class mainScene extends Phaser.Scene{
         var lineStartPosition={x:0,y:0};
         var isDragging=false;
         var currentColor;
+        var groupPath:Array<Tiles>= new Array<Tiles>();;
         var currentPath:Array<Tiles>= new Array<Tiles>();;
         let path=new Phaser.Curves.Path();
         this.pointer = this.input.activePointer;
-        this.selectedTiles=new Tiles(this,0,0,'',0.49);
+        this.selectedTiles;
         this.input.mouse.disableContextMenu();
         for (let x = 1; x <= 7; x++) {
             for (let y = 1; y <= 7; y++){
                 const random = Math.floor(Math.random() * this.colorTiles.length);
-                var shape=new Phaser.Geom.Circle(43,43,50);
                 if(x%2==1){
-                    var tileSprite=this.add.sprite(45+(35*x),100+(20+y*43),this.colorTiles[random]);
+                    var tileSprite=this.add.sprite(20+(35*x),100+20+(y*43),this.colorTiles[random]);
                 }else{
-                    var tileSprite=this.add.sprite(45+(35*x),100+(y*43),this.colorTiles[random]).setScale(0.49).setInteractive().setOrigin(0);
+                    var tileSprite=this.add.sprite(20+(35*x),100+(y*43),this.colorTiles[random]);
                 }
                 var frame = tileSprite.frame;
                 var hitArea = new Phaser.Geom.Rectangle(frame.x, frame.y, frame.width, frame.height);
@@ -70,9 +70,7 @@ export default class mainScene extends Phaser.Scene{
               // remember Starting Color
               currentColor = gameObject[0].texture.key.slice(0,-2);
               currentPath.push(gameObject[0]);
-              // draw/save last segment of the path
-              lineStartPosition.x = gameObject[0].x;
-              lineStartPosition.y = gameObject[0].y;
+              path.curves.length = 0;
               path.startPoint=gameObject[0];
               pathGraphics.visible=true;
               currentPath[currentPath.length-1].setTexture(currentColor+"_2");
@@ -83,40 +81,47 @@ export default class mainScene extends Phaser.Scene{
               }
               pathGraphics.clear();
               currentPath= [];
-              path.destroy();
+              groupPath=[];
+              path.curves.length = 0;
               pathGraphics.visible = false;
               isDragging = false;
         });
         this.input.on('pointerover', function(this,pointer,gameObject){
             if(pointer.isDown){
-                console.log(gameObject[0].texture.key.includes(currentColor));
-                if(gameObject[0] && gameObject[0].texture.key.includes(currentColor)){
+                if(gameObject[0] && gameObject[0].texture.key.includes(currentColor)&& Math.abs(gameObject[0].x-currentPath[currentPath.length-1].x)/35<=1 && Math.abs(gameObject[0].y-currentPath[currentPath.length-1].y)/43<=1){
                     if(currentPath.indexOf(gameObject[0])===-1){
+                        console.log('a');
+                        groupPath.push(currentPath[currentPath.length-1]);
                         currentPath.push(gameObject[0]);
                         currentPath[currentPath.length-1].setTexture(currentColor+"_2");
+                        groupPath.push(currentPath[currentPath.length-1]);
+                    
                     }else{
-                        currentPath[currentPath.length-1].setTexture(currentColor+"_1");
-                        currentPath.pop();
-                        //path.destroy();
-                        
+                        if(currentPath.length!==1){
+                            currentPath[currentPath.length-1].setTexture(currentColor+"_1");
+                            currentPath.pop();
+                            groupPath.pop();
+                            path.curves.length = 0;
+                        }
                     }
-                    console.log(currentPath.indexOf(gameObject[0]));
+                    for(var curPath of groupPath){
+                        path.lineTo(curPath.x,curPath.y);
+                    }
                     pathGraphics.clear();
                     pathGraphics.lineStyle(2, 0xffffff, 1);
                     path.draw(pathGraphics);
-                    }
-                 }
-            });
+                }
+            }
+        });
     }
     
-    /*update(time: number, delta: number): void {
-        //console.log(this.line);
+    update(time: number, delta: number): void {
         if(!this.pointer.isDown && this.afterClick){ 
             var selectedTiles: Array<Tiles>= new Array<Tiles>();
             var dropTiles: Array<Tiles>= new Array<Tiles>();
             var deepestSelTiles: Array<Tiles>= new Array<Tiles>();
             var deepestDropTiles: Array<Tiles>= new Array<Tiles>();
-            for(var value of this.arrTiles){   
+            for(var value of this.arrTiles.list){   
                 this.selectTilesCheck(value,selectedTiles);
             }
             if(selectedTiles.length>=3){
@@ -133,18 +138,16 @@ export default class mainScene extends Phaser.Scene{
             this.afterClick=true;
         }
         
-    }*/
-    
-
+    }
     selectTilesCheck(value, selectedTiles){
         if(value.texture.key.slice(-1)=='2'){
-            value.setTexture(value.color.replace(/2$/,"1"));
+            value.setTexture(value.texture.key.replace(/2$/,"1"));
             selectedTiles.push(value);
         }
     }
     dropTilesGroup(selectedTiles,dropTiles){
         for(var s of selectedTiles){
-            for(var v of this.arrTiles){
+            for(var v of this.arrTiles.list){
                 if(v.x===s.x && v.y < s.y){
                     if(selectedTiles.indexOf(v)==-1&&dropTiles.indexOf(v)==-1)
                         dropTiles.push(v);   
@@ -199,7 +202,7 @@ export default class mainScene extends Phaser.Scene{
                 }
             }
             var dropTween=this.tweens.add({
-                targets:this.arrTiles[this.arrTiles.indexOf(tile)],
+                targets:this.arrTiles.list[this.arrTiles.list.indexOf(tile)],
                 y:posY,
                 duration:500,
                 delay:500,
@@ -212,7 +215,7 @@ export default class mainScene extends Phaser.Scene{
         }
         for(var tile of selectedTiles){
             this.tweens.add({
-                targets:this.arrTiles[this.arrTiles.indexOf(tile)],
+                targets:this.arrTiles.list[this.arrTiles.list.indexOf(tile)],
                 x: 200,
                 y: 0,
                 duration:500,
