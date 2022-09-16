@@ -35,8 +35,8 @@ export default class mainScene extends Phaser.Scene{
         this.arrTiles= this.add.container(0, 0);
         this.posTiles=new Array();
         var currentColor;
-        var groupPath:Array<Tiles>= new Array<Tiles>();;
-        var currentPath:Array<Tiles>= new Array<Tiles>();;
+        var groupPath=new Array();
+        var currentPath=new Array();
         let path=new Phaser.Curves.Path();
         this.pointer = this.input.activePointer;
         this.selectedTiles;
@@ -112,7 +112,7 @@ export default class mainScene extends Phaser.Scene{
     
     update(time: number, delta: number): void {
         if(!this.pointer.isDown && this.afterClick){ 
-            var selectedTiles: Array<Tiles>= new Array<Tiles>();
+            var selectedTiles=new Array();
             var timerEvent;
             for(var value of this.arrTiles.list){   
                 this.selectTilesCheck(value,selectedTiles);
@@ -186,35 +186,6 @@ export default class mainScene extends Phaser.Scene{
                 duration:500,
             });
         }
-    }
-}
- 
-    
-export class Tiles extends Phaser.GameObjects.Image{ 
-
-    color:string;
-    constructor(scene,x, y,color,scale) {
-        super(scene,x,y,color,scale);
-        this.x=x;
-        this.y=y;
-        this.color=color;
-        this.setTexture(color).setScale(scale);
-        this.setPosition(x,y);
-        var shape=new Phaser.Geom.Circle(43,43,50);
-        this.setInteractive(shape,Phaser.Geom.Circle.Contains);
-        this.on('pointerdown', function(this){
-            scene.selectedTiles=this;
-            this.setTexture(color.replace(/1$/,"2"));
-        });
-        /*this.on('pointermove', function(this,pointer){
-            if(this.texture.key.slice(-1)==="1"){
-                if (pointer.isDown && color===scene.selectedTiles.color && Math.abs(x-scene.selectedTiles.x)/35<=1 && Math.abs(y-scene.selectedTiles.y)/43<=1)
-                {
-                    scene.selectedTiles=this;
-                    this.setTexture(color.replace(/1$/,"2"));
-                }
-            }
-        });*/
     }
 }
 
