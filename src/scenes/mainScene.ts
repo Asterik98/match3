@@ -2,16 +2,12 @@ import Phaser, { GameObjects, Textures, Tweens } from 'phaser'
 
 export default class mainScene extends Phaser.Scene{
     arrTiles;
+    posTiles;
     colorTiles: Array<string>=["RED_1","BLUE_1","PURPLE_1","YELLOW_1","GREEN_1"];
     afterClick=false;
     selectedTiles;
-    dropTiles;
-    deepestTiles;
     pointer;
     pathGraphics;
-    isDragging;
-    lineStartPositionX;
-    lineStartPositionY;
     currentColor;
     currentPaths;
     path;
@@ -37,8 +33,7 @@ export default class mainScene extends Phaser.Scene{
     create()
     {
         this.arrTiles= this.add.container(0, 0);
-        var lineStartPosition={x:0,y:0};
-        var isDragging=false;
+        this.posTiles=new Array();
         var currentColor;
         var groupPath:Array<Tiles>= new Array<Tiles>();;
         var currentPath:Array<Tiles>= new Array<Tiles>();;
@@ -49,11 +44,15 @@ export default class mainScene extends Phaser.Scene{
         for (let x = 1; x <= 7; x++) {
             for (let y = 1; y <= 7; y++){
                 const random = Math.floor(Math.random() * this.colorTiles.length);
+                var xAxis,yAxis;
                 if(x%2==1){
-                    var tileSprite=this.add.sprite(20+(35*x),100+20+(y*43),this.colorTiles[random]);
+                    yAxis=100+20+(y*43);
                 }else{
-                    var tileSprite=this.add.sprite(20+(35*x),100+(y*43),this.colorTiles[random]);
+                    yAxis=100+(y*43);
                 }
+                xAxis=45+(35*x);
+                var tileSprite=this.add.sprite(xAxis,yAxis,this.colorTiles[random]);
+                this.posTiles.push({x:xAxis,y:yAxis});
                 var frame = tileSprite.frame;
                 var hitArea = new Phaser.Geom.Rectangle(frame.x, frame.y, frame.width, frame.height);
                 tileSprite.setScale(0.49).setInteractive(hitArea,Phaser.Geom.Rectangle.Contains);
@@ -66,7 +65,6 @@ export default class mainScene extends Phaser.Scene{
             if(gameObject.length == 0){
                 return;
               }
-              isDragging = true;
               // remember Starting Color
               currentColor = gameObject[0].texture.key.slice(0,-2);
               currentPath.push(gameObject[0]);
@@ -83,7 +81,6 @@ export default class mainScene extends Phaser.Scene{
               groupPath=[];
               path.curves.length = 0;
               pathGraphics.visible = false;
-              isDragging = false;
         });
         this.input.on('pointerover', function(this,pointer,gameObject){
             if(pointer.isDown){
@@ -116,11 +113,13 @@ export default class mainScene extends Phaser.Scene{
     update(time: number, delta: number): void {
         if(!this.pointer.isDown && this.afterClick){ 
             var selectedTiles: Array<Tiles>= new Array<Tiles>();
+            var timerEvent;
             for(var value of this.arrTiles.list){   
                 this.selectTilesCheck(value,selectedTiles);
             }
             if(selectedTiles.length>=3){
-                this.dropAndInitNewTiles(selectedTiles,this.arrTiles.list);
+                this.dropTiles(selectedTiles,this.arrTiles.list);
+                timerEvent = this.time.delayedCall(2000, this.initTiles, [selectedTiles,this.arrTiles.list,this.posTiles], this);
             }else{
                 selectedTiles.splice(0);
             }
@@ -138,9 +137,9 @@ export default class mainScene extends Phaser.Scene{
         }
     }
 
-    dropAndInitNewTiles(selectedTiles,arrTiles){
-        var posY=0;
+    dropTiles(selectedTiles,arrTiles){
         for(var tile of arrTiles){
+            var posY=0;
             for(var sel of selectedTiles){
                 if(tile.x===sel.x && tile.y<sel.y && tile.visible===true){
                     posY=posY+43;
@@ -151,45 +150,42 @@ export default class mainScene extends Phaser.Scene{
                 y:'+='+posY.toString(),
                 duration:500,
                 delay:500,
-                onComplete:function(){
-                    selectedTiles.splice(0);
-                    dropTween.stop();
-                }
             });
             posY=0;
         }
-        for(var tile of selectedTiles){
+        for(var sel of selectedTiles){
             this.tweens.add({
-                targets:tile,
+                targets:arrTiles[arrTiles.indexOf(sel)],
                 x: 200,
                 y: 0,
                 duration:500,
                 onComplete: function (this) { 
                     for(var obj of selectedTiles){
-                        obj.visible=false;
+                        arrTiles[arrTiles.indexOf(obj)].visible=false;
                     }
-
                     dropTween.resume();
                 }
             });
         }
-        /*for(var tile of selectedTiles){
-            
-            this.tweens.add({
-                targets:this.arrTiles.list[this.arrTiles.list.indexOf(tile)],
-                x: 200,
-                y: 0,
-                duration:500,
-                onComplete: function (this) { 
-                    for(var obj of selectedTiles){
-                        obj.visible=false;
-                    }
-
-                    dropTween.resume();
-                }
-            });*/
+    }
+    initTiles(selectedTiles,arrTiles,posTiles){
+        var emptyPos= new Array();
+        for(var tile of posTiles){
+            if(arrTiles.find((obj)=>{return obj.x===tile.x&&obj.y===tile.y})===undefined){
+                emptyPos.push(tile);
+            }
         }
-
+        for(var i=0;i<selectedTiles.length;i++){
+            const random = Math.floor(Math.random() * this.colorTiles.length);
+            arrTiles[arrTiles.indexOf(selectedTiles[i])].setTexture(this.colorTiles[random]);
+            arrTiles[arrTiles.indexOf(selectedTiles[i])].visible=true;
+            this.tweens.add({
+                targets:arrTiles[arrTiles.indexOf(selectedTiles[i])],
+                x:emptyPos[i].x,
+                y:emptyPos[i].y,
+                duration:500,
+            });
+        }
     }
 }
  
