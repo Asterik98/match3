@@ -28,6 +28,16 @@ export default class mainScene extends Phaser.Scene{
         this.load.image('RED_2', 'assets/tiles/RED_2.png');
         this.load.image('YELLOW_1', 'assets/tiles/YELLOW_1.png');
         this.load.image('YELLOW_2', 'assets/tiles/YELLOW_2.png');
+        this.load.image('hpBg', 'assets/hpbar/hpbar_bg.png');
+        this.load.image('hpbarfill', 'assets/hpbar/hpbar_fill.png');
+        this.load.image('hpbarfillwhite', 'assets/hpbar/hpbar_fill_white.png');
+        this.load.image('hpbarframe', 'assets/hpbar/hpbar_frame.png');
+        this.load.image('RAINBOW', 'assets/booster/RAINBOW.png');
+        this.load.image('RAINBOW_off', 'assets/booster/RAINBOW_off.png');
+        this.load.image('RAINBOW_on', 'assets/booster/RAINBOW_on.png');
+        this.load.image('SHUFFLE', 'assets/booster/SHUFFLE.png');
+        this.load.image('SHUFFLE_off', 'assets/booster/SHUFFLE_off.png');
+        this.load.image('SHUFFLE_on', 'assets/booster/SHUFFLE_on.png');
     }
 
     create()
@@ -46,9 +56,9 @@ export default class mainScene extends Phaser.Scene{
                 const random = Math.floor(Math.random() * this.colorTiles.length);
                 var xAxis,yAxis;
                 if(x%2==1){
-                    yAxis=100+20+(y*43);
+                    yAxis=120+20+(y*43);
                 }else{
-                    yAxis=100+(y*43);
+                    yAxis=120+(y*43);
                 }
                 xAxis=45+(35*x);
                 var tileSprite=this.add.sprite(xAxis,yAxis,this.colorTiles[random]);
@@ -59,23 +69,50 @@ export default class mainScene extends Phaser.Scene{
                 this.arrTiles.add(tileSprite);
             } 
         }
+        const rainbow = this.add.sprite(115, 500, 'RAINBOW').setScale(0.49).setInteractive();
+        const shuffle = this.add.sprite(250, 500, 'SHUFFLE').setScale(0.49).setInteractive();
         var pathGraphics = this.add.graphics();
         pathGraphics.visible=false;
+        
         this.input.on('pointerdown', function(this,pointer,gameObject){
             if(gameObject.length == 0){
                 return;
-              }
-              // remember Starting Color
-              currentColor = gameObject[0].texture.key.slice(0,-2);
-              currentPath.push(gameObject[0]);
-              path=new Phaser.Curves.Path(gameObject[0].x,gameObject[0].y);
-              pathGraphics.visible=true;
-              currentPath[currentPath.length-1].setTexture(currentColor+"_2");
+            }
+            if(gameObject[0].texture.key.includes('SHUFFLE')){
+                gameObject[0].setTexture('SHUFFLE_on');
+                var posUsed=new Array();
+                for(var tile of this.scene.arrTiles.list){
+                    var posUsedTrue=false;
+                    while(posUsedTrue===false){
+                        const random = Math.floor(Math.random() * this.scene.posTiles.length);
+                        if(posUsed.indexOf(this.scene.posTiles[random])===-1){
+                            
+                            posUsed.push(this.scene.posTiles[random]);
+                            posUsedTrue=true;
+                        }
+                    }
+
+                    this.scene.tweens.add({
+                        targets:tile,
+                        x: posUsed[posUsed.length-1].x,
+                        y: posUsed[posUsed.length-1].y,
+                        duration:500
+                    });
+                }
+            }else{            // remember Starting Color
+                currentColor = gameObject[0].texture.key.slice(0,-2);
+                currentPath.push(gameObject[0]);
+                path=new Phaser.Curves.Path(gameObject[0].x,gameObject[0].y);
+                pathGraphics.visible=true;
+                currentPath[currentPath.length-1].setTexture(currentColor+"_2");
+            }
         });
         this.input.on('pointerup', function(this,gameObject){
             if(gameObject.length == 0){
                 return;
               }
+              rainbow.setTexture('RAINBOW');
+              shuffle.setTexture('SHUFFLE');
               pathGraphics.clear();
               currentPath= [];
               groupPath=[];
@@ -83,7 +120,10 @@ export default class mainScene extends Phaser.Scene{
               pathGraphics.visible = false;
         });
         this.input.on('pointerover', function(this,pointer,gameObject){
-            if(pointer.isDown){
+            if(gameObject[0].texture.key.includes('SHUFFLE')){
+                gameObject[0].setTexture('SHUFFLE_off');
+            }
+            else if(pointer.isDown){
                 if(gameObject[0] && gameObject[0].texture.key.includes(currentColor)&& Math.abs(gameObject[0].x-currentPath[currentPath.length-1].x)/35<=1 && Math.abs(gameObject[0].y-currentPath[currentPath.length-1].y)/43<=1){
                     if(currentPath.indexOf(gameObject[0])===-1){
                         groupPath.push(currentPath[currentPath.length-1]);
@@ -108,6 +148,11 @@ export default class mainScene extends Phaser.Scene{
                 }
             }
         });
+        this.input.on('pointerout', function(this,pointer,gameObject){
+            if(gameObject[0].texture.key.includes('SHUFFLE')){
+                gameObject[0].setTexture('SHUFFLE');
+            }
+        });
     }
     
     update(time: number, delta: number): void {
@@ -119,7 +164,7 @@ export default class mainScene extends Phaser.Scene{
             }
             if(selectedTiles.length>=3){
                 this.dropTiles(selectedTiles,this.arrTiles.list);
-                timerEvent = this.time.delayedCall(2000, this.initTiles, [selectedTiles,this.arrTiles.list,this.posTiles], this);
+                timerEvent = this.time.delayedCall(1100, this.initTiles, [selectedTiles,this.arrTiles.list,this.posTiles], this);
             }else{
                 selectedTiles.splice(0);
             }
