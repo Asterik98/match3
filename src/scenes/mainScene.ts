@@ -46,7 +46,6 @@ export default class mainScene extends Phaser.Scene{
         this.posTiles=new Array();
         var currentColor;
         var groupPath=new Array();
-        var currentPath=new Array();
         let path=new Phaser.Curves.Path();
         this.pointer = this.input.activePointer;
         this.selectedTiles;
@@ -99,12 +98,12 @@ export default class mainScene extends Phaser.Scene{
                         duration:500
                     });
                 }
-            }else{            // remember Starting Color
+            }else{  
                 currentColor = gameObject[0].texture.key.slice(0,-2);
-                currentPath.push(gameObject[0]);
+                groupPath.push(gameObject[0]);
                 path=new Phaser.Curves.Path(gameObject[0].x,gameObject[0].y);
                 pathGraphics.visible=true;
-                currentPath[currentPath.length-1].setTexture(currentColor+"_2");
+                groupPath[groupPath.length-1].setTexture(currentColor+"_2");
             }
         });
         this.input.on('pointerup', function(this,gameObject){
@@ -114,8 +113,7 @@ export default class mainScene extends Phaser.Scene{
               rainbow.setTexture('RAINBOW');
               shuffle.setTexture('SHUFFLE');
               pathGraphics.clear();
-              currentPath= [];
-              groupPath=[];
+              groupPath.splice(0);
               path.curves.length = 0;
               pathGraphics.visible = false;
         });
@@ -124,23 +122,22 @@ export default class mainScene extends Phaser.Scene{
                 gameObject[0].setTexture('SHUFFLE_off');
             }
             else if(pointer.isDown){
-                if(gameObject[0] && gameObject[0].texture.key.includes(currentColor)&& Math.abs(gameObject[0].x-currentPath[currentPath.length-1].x)/35<=1 && Math.abs(gameObject[0].y-currentPath[currentPath.length-1].y)/43<=1){
-                    if(currentPath.indexOf(gameObject[0])===-1){
-                        groupPath.push(currentPath[currentPath.length-1]);
-                        currentPath.push(gameObject[0]);
-                        currentPath[currentPath.length-1].setTexture(currentColor+"_2");
-                        groupPath.push(currentPath[currentPath.length-1]);
-                    
+                if(gameObject[0] && gameObject[0].texture.key.includes(currentColor)&& Math.abs(gameObject[0].x-groupPath[groupPath.length-1].x)/35<=1 && Math.abs(gameObject[0].y-groupPath[groupPath.length-1].y)/43<=1){
+                    if(groupPath.indexOf(gameObject[0])===-1){
+                        groupPath.push(gameObject[0]);
+                        gameObject[0].setTexture(currentColor+'_2');
+                        path.lineTo(groupPath[groupPath.length-1].x,groupPath[groupPath.length-1].y);
                     }else{
-                        if(currentPath.length!==1){
-                            currentPath[currentPath.length-1].setTexture(currentColor+"_1");
-                            currentPath.pop();
+                        if(groupPath.length!==1 && groupPath.indexOf(gameObject[0])!==groupPath.length-1){
+                            groupPath[groupPath.length-1].setTexture(currentColor+"_1");
                             groupPath.pop();
-                            path.curves.length = 0;
+                            console.log(path.curves[0]);
+                            path.curves.length=0;
+                            path=new Phaser.Curves.Path(groupPath[0].x,groupPath[0].y);
+                            for(var obj of groupPath){
+                                path.lineTo(obj.x,obj.y);
+                            }
                         }
-                    }
-                    for(var curPath of groupPath){
-                        path.lineTo(curPath.x,curPath.y);
                     }
                     pathGraphics.clear();
                     pathGraphics.lineStyle(2, 0xffffff, 1);
