@@ -39,7 +39,6 @@ export default class mainScene extends Phaser.Scene{
         this.load.image('SHUFFLE_off', 'assets/booster/SHUFFLE_off.png');
         this.load.image('SHUFFLE_on', 'assets/booster/SHUFFLE_on.png');
     }
-
     create()
     {
         this.arrTiles= this.add.container(0, 0);
@@ -72,12 +71,33 @@ export default class mainScene extends Phaser.Scene{
         const shuffle = this.add.sprite(250, 500, 'SHUFFLE').setScale(0.49).setInteractive();
         var pathGraphics = this.add.graphics();
         pathGraphics.visible=false;
-        
         this.input.on('pointerdown', function(this,pointer,gameObject){
             if(gameObject.length == 0){
                 return;
             }
-            if(gameObject[0].texture.key.includes('SHUFFLE')){
+            if(gameObject[0].texture.key.includes('RAINBOW')){
+                gameObject[0].setTexture('RAINBOW_on');
+                var rainbowTile=new Array();
+                while(rainbowTile.length<3){
+                    const random = Math.floor(Math.random() * this.scene.arrTiles.length);
+                    rainbowTile.push(this.scene.arrTiles.list[random]);
+                    var currentTexture=rainbowTile[0].texture.key;
+                    for(var tile of this.scene.arrTiles.list){
+                        if(tile.texture.key.includes(currentTexture)&& Math.abs(tile.x-rainbowTile[rainbowTile.length-1].x)/35<=1 && Math.abs(tile.y-rainbowTile[rainbowTile.length-1].y)/43<=1){ 
+                            if(rainbowTile.indexOf(tile)===-1){
+                                rainbowTile.push(tile);
+                            }
+                        }   
+                    }
+                    if(rainbowTile.length>=3){
+                        for(var tile of rainbowTile){
+                            this.scene.arrTiles.list[this.scene.arrTiles.list.indexOf(tile)].setTexture(tile.texture.key.replace(/1$/,"2"));
+                        }
+                    }else{
+                        rainbowTile.splice(0);
+                    }
+                }
+            }else if(gameObject[0].texture.key.includes('SHUFFLE')){
                 gameObject[0].setTexture('SHUFFLE_on');
                 var posUsed=new Array();
                 for(var tile of this.scene.arrTiles.list){
@@ -85,12 +105,10 @@ export default class mainScene extends Phaser.Scene{
                     while(posUsedTrue===false){
                         const random = Math.floor(Math.random() * this.scene.posTiles.length);
                         if(posUsed.indexOf(this.scene.posTiles[random])===-1){
-                            
                             posUsed.push(this.scene.posTiles[random]);
                             posUsedTrue=true;
                         }
                     }
-
                     this.scene.tweens.add({
                         targets:tile,
                         x: posUsed[posUsed.length-1].x,
