@@ -68,7 +68,7 @@ export default class mainScene extends Phaser.Scene{
             } 
         }
         const rainbow = this.add.sprite(115, 500, 'RAINBOW').setScale(0.49).setInteractive();
-        const shuffle = this.add.sprite(250, 500, 'SHUFFLE').setScale(0.49).setInteractive();
+        const shuffle = this.add.sprite(255, 500, 'SHUFFLE').setScale(0.49).setInteractive();
         var pathGraphics = this.add.graphics();
         pathGraphics.visible=false;
         this.input.on('pointerdown', function(this,pointer,gameObject){

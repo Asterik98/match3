@@ -4,8 +4,12 @@ import mainScene from './scenes/mainScene'
 
 const config: Phaser.Types.Core.GameConfig = {
 	type: Phaser.AUTO,
-	width: 375,
-	height: 587,
+	scale: {
+		mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+		width: 375,
+		height: 587,
+	},
 	physics: {
 		default: 'arcade',
 		arcade: {
