@@ -11,6 +11,12 @@ export default class mainScene extends Phaser.Scene{
     currentColor;
     currentPaths;
     path;
+    scoreText;
+    levelText;
+    timedEvent;
+    scoreTween;
+    initScore;
+    startPoint;
 	constructor()
 	{
 		super('hello-world');
@@ -38,9 +44,15 @@ export default class mainScene extends Phaser.Scene{
         this.load.image('SHUFFLE', 'assets/booster/SHUFFLE.png');
         this.load.image('SHUFFLE_off', 'assets/booster/SHUFFLE_off.png');
         this.load.image('SHUFFLE_on', 'assets/booster/SHUFFLE_on.png');
+        this.load.image('hpbar_bg','assets/hpbar/hpbar_bg.png');
+        this.load.image('hpbar_fill','assets/hpbar/hpbar_fill.png');
+        this.load.image('hpbar_fill_white','assets/hpbar/hpbar_fill_white.png');
+        this.load.image('hpbar_frame','assets/hpbar/hpbar_frame.png');
     }
     create()
     {
+        this.initScore=[10];
+        this.startPoint=[10];
         this.arrTiles= this.add.container(0, 0);
         this.posTiles=new Array();
         var currentColor;
@@ -67,10 +79,18 @@ export default class mainScene extends Phaser.Scene{
                 this.arrTiles.add(tileSprite);
             } 
         }
+        const hpbarbg = this.add.sprite(187.5, 50, 'hpbar_bg').setScale(3);
+        const hpbarfillwhite = this.add.sprite(187, 50, 'hpbar_fill_white').setScale(3);
+        const hpbarfill = this.add.sprite(187, 50, 'hpbar_fill').setScale(3);
+        const hpbarframe = this.add.sprite(187, 50, 'hpbar_frame').setScale(3);
         const rainbow = this.add.sprite(115, 500, 'RAINBOW').setScale(0.49).setInteractive();
         const shuffle = this.add.sprite(255, 500, 'SHUFFLE').setScale(0.49).setInteractive();
+        this.levelText = this.add.text(150, 20, 'Level 1');
+        this.scoreText = this.add.text(175, 43, '10');
+        this.timedEvent;
         var pathGraphics = this.add.graphics();
         pathGraphics.visible=false;
+        
         this.input.on('pointerdown', function(this,pointer,gameObject){
             if(gameObject.length == 0){
                 return;
@@ -128,7 +148,6 @@ export default class mainScene extends Phaser.Scene{
             if(gameObject.length == 0){
                 return;
               }
-              rainbow.setTexture('RAINBOW');
               shuffle.setTexture('SHUFFLE');
               pathGraphics.clear();
               groupPath.splice(0);
@@ -174,12 +193,13 @@ export default class mainScene extends Phaser.Scene{
         if(!this.pointer.isDown && this.afterClick){ 
             var selectedTiles=new Array();
             var timerEvent;
+            this.timedEvent;
             for(var value of this.arrTiles.list){   
                 this.selectTilesCheck(value,selectedTiles);
             }
             if(selectedTiles.length>=3){
                 this.dropTiles(selectedTiles,this.arrTiles.list);
-                timerEvent = this.time.delayedCall(1100, this.initTiles, [selectedTiles,this.arrTiles.list,this.posTiles], this);
+                timerEvent = this.time.delayedCall(1100, this.initTiles, [selectedTiles,this.arrTiles.list,this.posTiles,this.scoreText,this.initScore,selectedTiles.length,this.startPoint], this);
             }else{
                 selectedTiles.splice(0);
             }
@@ -188,7 +208,6 @@ export default class mainScene extends Phaser.Scene{
         if(this.pointer.isDown){
             this.afterClick=true;
         }
-        
     }
     selectTilesCheck(value, selectedTiles){
         if(value.texture.key.slice(-1)=='2'){
@@ -205,7 +224,7 @@ export default class mainScene extends Phaser.Scene{
                     posY=posY+43;
                 }
             }
-            var dropTween=this.tweens.add({
+            this.tweens.add({
                 targets:tile,
                 y:'+='+posY.toString(),
                 duration:500,
@@ -223,12 +242,11 @@ export default class mainScene extends Phaser.Scene{
                     for(var obj of selectedTiles){
                         arrTiles[arrTiles.indexOf(obj)].visible=false;
                     }
-                    dropTween.resume();
                 }
             });
         }
     }
-    initTiles(selectedTiles,arrTiles,posTiles){
+    initTiles(selectedTiles,arrTiles,posTiles,scoreText,initScore,length,startPoint){
         var emptyPos= new Array();
         for(var tile of posTiles){
             if(arrTiles.find((obj)=>{return obj.x===tile.x&&obj.y===tile.y})===undefined){
@@ -246,6 +264,24 @@ export default class mainScene extends Phaser.Scene{
                 duration:500,
             });
         }
+        var scoreTween=this.tweens.addCounter({
+            from:startPoint[0],
+            to: Math.max(0,startPoint-(length*20)),
+            duration:500,
+            onUpdate:function(this){
+                scoreText.setText(Math.floor(scoreTween.getValue()).toString());
+            },
+            onComplete:function(this){
+                if(scoreTween.getValue()===0){
+                    initScore[0]=initScore[0]*2;
+                    scoreText.setText(initScore[0]);
+                    startPoint[0]=initScore[0];
+                }else{
+                    startPoint[0]=scoreTween.getValue();
+                    console.log(initScore[0]);
+                }
+            },
+        });
     }
 }
 
