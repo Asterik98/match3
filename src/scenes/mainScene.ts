@@ -17,6 +17,8 @@ export default class mainScene extends Phaser.Scene{
     scoreTween;
     initScore;
     startPoint;
+    hpbarbg;
+    bar;
 	constructor()
 	{
 		super('hello-world');
@@ -79,18 +81,19 @@ export default class mainScene extends Phaser.Scene{
                 this.arrTiles.add(tileSprite);
             } 
         }
-        const hpbarbg = this.add.sprite(187.5, 50, 'hpbar_bg').setScale(3);
+        this.hpbarbg = this.add.sprite(187, 50, 'hpbar_bg').setScale(3);
         const hpbarfillwhite = this.add.sprite(187, 50, 'hpbar_fill_white').setScale(3);
-        const hpbarfill = this.add.sprite(187, 50, 'hpbar_fill').setScale(3);
-        const hpbarframe = this.add.sprite(187, 50, 'hpbar_frame').setScale(3);
         const rainbow = this.add.sprite(115, 500, 'RAINBOW').setScale(0.49).setInteractive();
         const shuffle = this.add.sprite(255, 500, 'SHUFFLE').setScale(0.49).setInteractive();
         this.levelText = this.add.text(150, 20, 'Level 1');
-        this.scoreText = this.add.text(175, 43, '10');
         this.timedEvent;
+        this.bar = this.add.graphics();
+        this.bar.fillRect(this.hpbarbg.getTopLeft().x+5,this.hpbarbg.getTopLeft().y+3, (this.hpbarbg.width*3)-10, (this.hpbarbg.height*3)-5);
+        this.bar.fillStyle(0xff0000);
+        this.scoreText = this.add.text(175, 43, '10').setTint(0x00000);
+        const hpbarframe = this.add.sprite(187, 50, 'hpbar_frame').setScale(3);
         var pathGraphics = this.add.graphics();
         pathGraphics.visible=false;
-        
         this.input.on('pointerdown', function(this,pointer,gameObject){
             if(gameObject.length == 0){
                 return;
@@ -199,7 +202,8 @@ export default class mainScene extends Phaser.Scene{
             }
             if(selectedTiles.length>=3){
                 this.dropTiles(selectedTiles,this.arrTiles.list);
-                timerEvent = this.time.delayedCall(1100, this.initTiles, [selectedTiles,this.arrTiles.list,this.posTiles,this.scoreText,this.initScore,selectedTiles.length,this.startPoint], this);
+                timerEvent = this.time.delayedCall(1100, this.initTiles, [selectedTiles,this.arrTiles.list,this.posTiles,this.scoreText,this.initScore,
+                    selectedTiles.length,this.startPoint,this.hpbarbg,this.bar,this.levelText], this);
             }else{
                 selectedTiles.splice(0);
             }
@@ -246,7 +250,7 @@ export default class mainScene extends Phaser.Scene{
             });
         }
     }
-    initTiles(selectedTiles,arrTiles,posTiles,scoreText,initScore,length,startPoint){
+    initTiles(selectedTiles,arrTiles,posTiles,scoreText,initScore,length,startPoint,hpbarbg,bar,levelText){
         var emptyPos= new Array();
         for(var tile of posTiles){
             if(arrTiles.find((obj)=>{return obj.x===tile.x&&obj.y===tile.y})===undefined){
@@ -264,24 +268,42 @@ export default class mainScene extends Phaser.Scene{
                 duration:500,
             });
         }
-        var scoreTween=this.tweens.addCounter({
+        
+        var scoreRedTween=this.tweens.addCounter({
             from:startPoint[0],
             to: Math.max(0,startPoint-(length*20)),
             duration:500,
             onUpdate:function(this){
-                scoreText.setText(Math.floor(scoreTween.getValue()).toString());
+                scoreText.setText(Math.floor(scoreRedTween.getValue()).toString());
+                bar.commandBuffer[3]=hpbarbg.width*(scoreRedTween.getValue()/initScore[0])*3+10;
             },
             onComplete:function(this){
-                if(scoreTween.getValue()===0){
+                if(scoreRedTween.getValue()===0){
                     initScore[0]=initScore[0]*2;
                     scoreText.setText(initScore[0]);
                     startPoint[0]=initScore[0];
+                    levelText.text="Level "+(parseInt(levelText.text.slice(-1))+1).toString();
+                    scoreAddTween.resume();
                 }else{
-                    startPoint[0]=scoreTween.getValue();
-                    console.log(initScore[0]);
+                    startPoint[0]=scoreRedTween.getValue();
                 }
+            },
+        });
+        var scoreAddTween=this.tweens.addCounter({
+            from:0,
+            to: initScore[0]*2,
+            duration:500,
+            paused:true,
+            onUpdate:function(this){
+                scoreText.setText(Math.floor(scoreAddTween.getValue()).toString());
+                bar.commandBuffer[3]=(hpbarbg.width*scoreAddTween.progress)*3-10;
             },
         });
     }
 }
 
+
+  /*function (x, y, width, height) {
+    this.commandBuffer.push(Commands.FILL_RECT, x, y, width, height);
+    return this;
+  }*/
