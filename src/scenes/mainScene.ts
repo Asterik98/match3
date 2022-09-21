@@ -19,10 +19,6 @@ export default class mainScene extends Phaser.Scene{
     startPoint;
     hpbarbg;
     bar;
-    getPointFx;
-    dropTileFx;
-    nextLevelFx;
-    backgroundFx;
 	constructor()
 	{
 		super('hello-world');
@@ -30,6 +26,8 @@ export default class mainScene extends Phaser.Scene{
 
 	preload()
     {     
+        this.load.spritesheet('tileFx', 'assets/tiles_fx/tiles_fx.png',{frameWidth:145,frameHeight:153});
+        this.load.spritesheet('tileSelectFx', 'assets/tiles_fx/tiles_select.png',{frameWidth:145,frameHeight:153});
         this.load.image('BLUE_1', 'assets/tiles/BLUE_1.png');
         this.load.image('BLUE_2', 'assets/tiles/BLUE_2.png');
         this.load.image('GREEN_1', 'assets/tiles/GREEN_1.png');
@@ -54,12 +52,14 @@ export default class mainScene extends Phaser.Scene{
         this.load.image('hpbar_fill','assets/hpbar/hpbar_fill.png');
         this.load.image('hpbar_fill_white','assets/hpbar/hpbar_fill_white.png');
         this.load.image('hpbar_frame','assets/hpbar/hpbar_frame.png');
+<<<<<<< HEAD
         this.load.audio('backMusic', 'assets/Song/251461__joshuaempyre__arcade-music-loop.wav');
         this.load.audio('getPointFx', 'assets/Song/341695__projectsu012__coins-1.wav');
         this.load.audio('tilePointedFX', 'assets/Song/508482__junggle__water-plap.wav');
         this.load.audio('tileDropFX', 'assets/Song/243400__freakinbehemoth__woosh.wav');
         this.load.audio('nextLevelFX', 'assets/Song/403012__inspectorj__ui-confirmation-alert-a5.wav');
-        //this.load.audio('tileDropFX', 'assets/Song/243400__freakinbehemoth__woosh.wav');
+=======
+>>>>>>> parent of 2f61ad6 (Add audioFx)
     }
     create()
     {
@@ -104,12 +104,27 @@ export default class mainScene extends Phaser.Scene{
         const hpbarframe = this.add.sprite(187, 50, 'hpbar_frame').setScale(3);
         var pathGraphics = this.add.graphics();
         pathGraphics.visible=false;
+<<<<<<< HEAD
         this.backgroundFx= this.sound.add('backMusic',{volume: 0.5});
         this.backgroundFx.play({loop: true});
         var tilePointedFx = this.sound.add('tilePointedFX');
         this.getPointFx = this.sound.add('getPointFx');
         this.dropTileFx= this.sound.add('tileDropFX',{volume: 2.5});
         this.nextLevelFx= this.sound.add('nextLevelFX');
+        this.anims.create({
+            key: "tilefxAnim",
+            frameRate: 7,
+            frames: this.anims.generateFrameNumbers("tileFx", { start: 0, end: 23 }),
+            repeat: -1
+        });
+        this.anims.create({
+            key: "tileSelectfxAnim",
+            frameRate: 7,
+            frames: this.anims.generateFrameNumbers("tileFx", { start: 0, end: 23 }),
+            repeat: -1
+        });
+=======
+>>>>>>> parent of 2f61ad6 (Add audioFx)
         this.input.on('pointerdown', function(this,pointer,gameObject){
             if(gameObject.length == 0){
                 return;
@@ -117,8 +132,7 @@ export default class mainScene extends Phaser.Scene{
             if(gameObject[0].texture.key.includes('RAINBOW')){
                 gameObject[0].setTexture('RAINBOW_on');
                 var rainbowTile=new Array();
-                var loop=0;
-                while(rainbowTile.length<3 && loop<=49){
+                while(rainbowTile.length<3){
                     const random = Math.floor(Math.random() * this.scene.arrTiles.length);
                     rainbowTile.push(this.scene.arrTiles.list[random]);
                     var currentTexture=rainbowTile[0].texture.key;
@@ -136,19 +150,29 @@ export default class mainScene extends Phaser.Scene{
                     }else{
                         rainbowTile.splice(0);
                     }
-                    loop++;
-                    if(loop>49){
-                        this.scene.shuffleTiles();
-                        break;
-                    }   
                 }
             }else if(gameObject[0].texture.key.includes('SHUFFLE')){
-                this.scene.getPointFx.play();
                 gameObject[0].setTexture('SHUFFLE_on');
-                this.scene.shuffleTiles();
+                var posUsed=new Array();
+                for(var tile of this.scene.arrTiles.list){
+                    var posUsedTrue=false;
+                    while(posUsedTrue===false){
+                        const random = Math.floor(Math.random() * this.scene.posTiles.length);
+                        if(posUsed.indexOf(this.scene.posTiles[random])===-1){
+                            posUsed.push(this.scene.posTiles[random]);
+                            posUsedTrue=true;
+                        }
+                    }
+                    this.scene.tweens.add({
+                        targets:tile,
+                        x: posUsed[posUsed.length-1].x,
+                        y: posUsed[posUsed.length-1].y,
+                        duration:500
+                    });
+                }
             }else{  
-                tilePointedFx.play();
                 currentColor = gameObject[0].texture.key.slice(0,-2);
+                gameObject[0].add.sprite(gameObject[0].x, gameObject[0].y, 'tileFx').setScale(0.49).play('tilefxAnim');
                 groupPath.push(gameObject[0]);
                 path=new Phaser.Curves.Path(gameObject[0].x,gameObject[0].y);
                 pathGraphics.visible=true;
@@ -174,6 +198,7 @@ export default class mainScene extends Phaser.Scene{
                     if(groupPath.indexOf(gameObject[0])===-1){
                         groupPath.push(gameObject[0]);
                         gameObject[0].setTexture(currentColor+'_2');
+                        gameObject[0].add.sprite(gameObject[0].x, gameObject[0].y, 'tileFx').setScale(0.49).play('tilefxAnim');
                         path.lineTo(groupPath[groupPath.length-1].x,groupPath[groupPath.length-1].y);
                     }else{
                         if(groupPath.length!==1 && groupPath.indexOf(gameObject[0])!==groupPath.length-1){
@@ -187,7 +212,6 @@ export default class mainScene extends Phaser.Scene{
                             }
                         }
                     }
-                    tilePointedFx.play();
                     pathGraphics.clear();
                     pathGraphics.lineStyle(2, 0xffffff, 1);
                     path.draw(pathGraphics);
@@ -200,25 +224,7 @@ export default class mainScene extends Phaser.Scene{
             }
         });
     }
-    shuffleTiles(){
-        var posUsed=new Array();
-                for(var tile of this.arrTiles.list){
-                    var posUsedTrue=false;
-                    while(posUsedTrue===false){
-                        const random = Math.floor(Math.random() * this.posTiles.length);
-                        if(posUsed.indexOf(this.posTiles[random])===-1){
-                            posUsed.push(this.posTiles[random]);
-                            posUsedTrue=true;
-                        }
-                    }
-                    this.tweens.add({
-                        targets:tile,
-                        x: posUsed[posUsed.length-1].x,
-                        y: posUsed[posUsed.length-1].y,
-                        duration:500
-                    });
-                }
-    }
+    
     update(time: number, delta: number): void {
         if(!this.pointer.isDown && this.afterClick){ 
             var selectedTiles=new Array();
@@ -228,10 +234,9 @@ export default class mainScene extends Phaser.Scene{
                 this.selectTilesCheck(value,selectedTiles);
             }
             if(selectedTiles.length>=3){
-                this.getPointFx.play();
                 this.dropTiles(selectedTiles,this.arrTiles.list);
                 timerEvent = this.time.delayedCall(1100, this.initTiles, [selectedTiles,this.arrTiles.list,this.posTiles,this.scoreText,this.initScore,
-                    selectedTiles.length,this.startPoint,this.hpbarbg,this.bar,this.levelText,this.dropTileFx,this.nextLevelFx], this);
+                    selectedTiles.length,this.startPoint,this.hpbarbg,this.bar,this.levelText], this);
             }else{
                 selectedTiles.splice(0);
             }
@@ -278,8 +283,7 @@ export default class mainScene extends Phaser.Scene{
             });
         }
     }
-    initTiles(selectedTiles,arrTiles,posTiles,scoreText,initScore,length,startPoint,hpbarbg,bar,levelText,dropTileFx,nextLevelFx){
-        dropTileFx.play();
+    initTiles(selectedTiles,arrTiles,posTiles,scoreText,initScore,length,startPoint,hpbarbg,bar,levelText){
         var emptyPos= new Array();
         for(var tile of posTiles){
             if(arrTiles.find((obj)=>{return obj.x===tile.x&&obj.y===tile.y})===undefined){
@@ -312,7 +316,6 @@ export default class mainScene extends Phaser.Scene{
                     scoreText.setText(initScore[0]);
                     startPoint[0]=initScore[0];
                     levelText.text="Level "+(parseInt(levelText.text.slice(-1))+1).toString();
-                    nextLevelFx.play();
                     scoreAddTween.resume();
                 }else{
                     startPoint[0]=scoreRedTween.getValue();
