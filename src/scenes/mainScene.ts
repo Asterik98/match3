@@ -23,6 +23,7 @@ export default class mainScene extends Phaser.Scene{
     dropTileFx;
     nextLevelFx;
     backgroundFx;
+    groupTiles;
 	constructor()
 	{
 		super('hello-world');
@@ -30,6 +31,8 @@ export default class mainScene extends Phaser.Scene{
 
 	preload()
     {     
+        this.load.spritesheet('tileFx', 'assets/tiles_fx/tiles_fx.png',{frameWidth:145,frameHeight:153});
+        this.load.spritesheet('tileSelectFx', 'assets/tiles_select/tiles_select.png',{frameWidth:114,frameHeight:105});
         this.load.image('BLUE_1', 'assets/tiles/BLUE_1.png');
         this.load.image('BLUE_2', 'assets/tiles/BLUE_2.png');
         this.load.image('GREEN_1', 'assets/tiles/GREEN_1.png');
@@ -66,6 +69,7 @@ export default class mainScene extends Phaser.Scene{
         this.startPoint=[10];
         this.arrTiles= this.add.container(0, 0);
         this.posTiles=new Array();
+        this.groupTiles=new Array();
         var currentColor;
         var groupPath=new Array();
         let path=new Phaser.Curves.Path();
@@ -90,7 +94,6 @@ export default class mainScene extends Phaser.Scene{
                 this.arrTiles.add(tileSprite);
             } 
         }
-        console.log(this.arrTiles);
         this.hpbarbg = this.add.sprite(187, 50, 'hpbar_bg').setScale(3);
         const hpbarfillwhite = this.add.sprite(187, 50, 'hpbar_fill_white').setScale(3);
         const rainbow = this.add.sprite(115, 500, 'RAINBOW').setScale(0.49).setInteractive();
@@ -104,12 +107,24 @@ export default class mainScene extends Phaser.Scene{
         const hpbarframe = this.add.sprite(187, 50, 'hpbar_frame').setScale(3);
         var pathGraphics = this.add.graphics();
         pathGraphics.visible=false;
-        this.backgroundFx= this.sound.add('backMusic',{volume: 0.5});
+        this.backgroundFx= this.sound.add('backMusic',{volume: 0.3});
         this.backgroundFx.play({loop: true});
         var tilePointedFx = this.sound.add('tilePointedFX');
         this.getPointFx = this.sound.add('getPointFx');
         this.dropTileFx= this.sound.add('tileDropFX',{volume: 2.5});
         this.nextLevelFx= this.sound.add('nextLevelFX');
+        this.anims.create({
+            key: "tilefxAnim",
+            frameRate: 7,
+            frames: this.anims.generateFrameNumbers("tileFx", { start: 0, end: 23 }),
+            repeat: -1
+        });
+        this.anims.create({
+            key: "tileSelectfxAnim",
+            frameRate: 7,
+            frames: this.anims.generateFrameNumbers("tileSelectFx", { start: 0, end: 23 }),
+            repeat: -1
+        });
         this.input.on('pointerdown', function(this,pointer,gameObject){
             if(gameObject.length == 0){
                 return;
@@ -148,6 +163,8 @@ export default class mainScene extends Phaser.Scene{
                 this.scene.shuffleTiles();
             }else{  
                 tilePointedFx.play();
+                gameObject[0][1]=this.scene.add.sprite(gameObject[0].x,gameObject[0].y,'tileSelectFx').setScale(0.49).play('tileSelectfxAnim');
+                this.scene.groupTiles.push(gameObject[0][1]);
                 currentColor = gameObject[0].texture.key.slice(0,-2);
                 groupPath.push(gameObject[0]);
                 path=new Phaser.Curves.Path(gameObject[0].x,gameObject[0].y);
@@ -159,6 +176,7 @@ export default class mainScene extends Phaser.Scene{
             if(gameObject.length == 0){
                 return;
               }
+              this.scene.groupTiles.splice(0);
               shuffle.setTexture('SHUFFLE');
               pathGraphics.clear();
               groupPath.splice(0);
@@ -175,6 +193,15 @@ export default class mainScene extends Phaser.Scene{
                         groupPath.push(gameObject[0]);
                         gameObject[0].setTexture(currentColor+'_2');
                         path.lineTo(groupPath[groupPath.length-1].x,groupPath[groupPath.length-1].y);
+                        gameObject[0][1]=this.scene.add.sprite(gameObject[0].x,gameObject[0].y,'tileSelectFx').setScale(0.49).play('tileSelectfxAnim');
+                        this.scene.groupTiles.push(gameObject[0][1]);
+                        if(this.scene.groupTiles.length>=3){
+                            console.log(this.scene.groupTiles.length);
+                            for(var tile of this.scene.groupTiles){
+                                tile.setTexture('tileFx');
+                                tile.play('tilefxAnim');
+                            }
+                        }
                     }else{
                         if(groupPath.length!==1 && groupPath.indexOf(gameObject[0])!==groupPath.length-1){
                             groupPath[groupPath.length-1].setTexture(currentColor+"_1");
@@ -185,8 +212,11 @@ export default class mainScene extends Phaser.Scene{
                             for(var obj of groupPath){
                                 path.lineTo(obj.x,obj.y);
                             }
+                            this.scene.groupTiles[this.scene.groupTiles.length-1][1].setTexture('tileSelectFx').play('tileSelectfxAnim');
+                            this.scene.groupTiles.pop();
                         }
                     }
+
                     tilePointedFx.play();
                     pathGraphics.clear();
                     pathGraphics.lineStyle(2, 0xffffff, 1);
@@ -244,6 +274,7 @@ export default class mainScene extends Phaser.Scene{
     selectTilesCheck(value, selectedTiles){
         if(value.texture.key.slice(-1)=='2'){
             value.setTexture(value.texture.key.replace(/2$/,"1"));
+            value[1].destroy();
             selectedTiles.push(value);
         }
     }
@@ -312,7 +343,7 @@ export default class mainScene extends Phaser.Scene{
                     scoreText.setText(initScore[0]);
                     startPoint[0]=initScore[0];
                     levelText.text="Level "+(parseInt(levelText.text.slice(-1))+1).toString();
-                    //nextLevelFx.play();
+                    nextLevelFx.play();
                     scoreAddTween.resume();
                 }else{
                     startPoint[0]=scoreRedTween.getValue();
