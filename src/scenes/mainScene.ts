@@ -1,4 +1,4 @@
-import Phaser, { GameObjects, Textures, Tweens } from 'phaser'
+import 'phaser';
 
 export default class mainScene extends Phaser.Scene{
     arrTiles;
@@ -59,7 +59,6 @@ export default class mainScene extends Phaser.Scene{
         this.load.audio('tilePointedFX', 'assets/Song/508482__junggle__water-plap.wav');
         this.load.audio('tileDropFX', 'assets/Song/243400__freakinbehemoth__woosh.wav');
         this.load.audio('nextLevelFX', 'assets/Song/403012__inspectorj__ui-confirmation-alert-a5.wav');
-        //this.load.audio('tileDropFX', 'assets/Song/243400__freakinbehemoth__woosh.wav');
     }
     create()
     {
@@ -91,6 +90,7 @@ export default class mainScene extends Phaser.Scene{
                 this.arrTiles.add(tileSprite);
             } 
         }
+        console.log(this.arrTiles);
         this.hpbarbg = this.add.sprite(187, 50, 'hpbar_bg').setScale(3);
         const hpbarfillwhite = this.add.sprite(187, 50, 'hpbar_fill_white').setScale(3);
         const rainbow = this.add.sprite(115, 500, 'RAINBOW').setScale(0.49).setInteractive();
@@ -312,7 +312,7 @@ export default class mainScene extends Phaser.Scene{
                     scoreText.setText(initScore[0]);
                     startPoint[0]=initScore[0];
                     levelText.text="Level "+(parseInt(levelText.text.slice(-1))+1).toString();
-                    nextLevelFx.play();
+                    //nextLevelFx.play();
                     scoreAddTween.resume();
                 }else{
                     startPoint[0]=scoreRedTween.getValue();
@@ -331,9 +331,3 @@ export default class mainScene extends Phaser.Scene{
         });
     }
 }
-
-
-  /*function (x, y, width, height) {
-    this.commandBuffer.push(Commands.FILL_RECT, x, y, width, height);
-    return this;
-  }*/
