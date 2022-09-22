@@ -13,6 +13,7 @@ export default class mainScene extends Phaser.Scene{
     hpbarbg; bar;
     getPointFx; dropTileFx; nextLevelFx; backgroundFx;
     groupTiles;
+    monsterSprite;monsterHp;
 	constructor()
 	{
 		super('hello-world');
@@ -33,6 +34,8 @@ export default class mainScene extends Phaser.Scene{
         this.load.image('RED_2', 'assets/tiles/RED_2.png');
         this.load.image('YELLOW_1', 'assets/tiles/YELLOW_1.png');
         this.load.image('YELLOW_2', 'assets/tiles/YELLOW_2.png');
+        //monster
+        this.load.image('monster', 'assets/monster.png');
         //hpbar
         this.load.image('hpbar_bg','assets/hpbar/hpbar_bg.png');
         this.load.image('hpbar_fill','assets/hpbar/hpbar_fill.png');
@@ -69,6 +72,9 @@ export default class mainScene extends Phaser.Scene{
         let path=new Phaser.Curves.Path();
         var pathGraphics = this.add.graphics();
         pathGraphics.visible=false;
+        //draw monster
+        this.monsterSprite=this.add.sprite(187, 105, 'monster').setScale(0.1).setVisible(false);
+        this.monsterHp=[300];
         //draw tile sprite
         this.pointer = this.input.activePointer;
         this.input.mouse.disableContextMenu();
@@ -263,6 +269,14 @@ export default class mainScene extends Phaser.Scene{
             }
     }
     update(time: number, delta: number): void {
+        if(this.levelText.text.slice(-1)%3===0){
+            this.monsterSprite.visible=true;
+            this.bar.fillStyle(0xA020F0);
+           
+        }else{
+            this.bar.fillStyle(0xff0000);
+            this.monsterSprite.visible=false;
+        }
         this.coolDownTextShuffle.setText((10-Math.floor(this.timedEventShuffle.getProgress()*10)).toString().substr(0, 2));
         this.coolDownTextRainbow.setText((10-Math.floor(this.timedEventRainbow.getProgress()*10)).toString().substr(0, 2));
         if(!this.pointer.isDown && this.afterClick){ 
@@ -276,7 +290,8 @@ export default class mainScene extends Phaser.Scene{
                 this.getPointFx.play();
                 this.dropTiles(selectedTiles,this.arrTiles.list,this.rainbow,this.timedEventRainbow,this.coolDownTextRainbow,this.shuffle);
                 timerEvent = this.time.delayedCall(1100, this.initTiles, [selectedTiles,this.arrTiles.list,this.posTiles,this.scoreText,this.initScore,
-                    selectedTiles.length,this.startPoint,this.hpbarbg,this.bar,this.levelText,this.dropTileFx,this.nextLevelFx,this.rainbow,this.coolDownTextRainbow,this.timedEventRainbow,this.shuffle,this.timedEventShuffle], this);
+                    selectedTiles.length,this.startPoint,this.hpbarbg,this.bar,this.levelText,this.dropTileFx,this.nextLevelFx,this.rainbow,
+                    this.coolDownTextRainbow,this.timedEventRainbow,this.shuffle,this.timedEventShuffle,this.monsterHp], this);
             }else{
                 selectedTiles.splice(0);
             }
@@ -333,8 +348,15 @@ export default class mainScene extends Phaser.Scene{
             });
         }
     }
-    initTiles(selectedTiles,arrTiles,posTiles,scoreText,initScore,length,startPoint,hpbarbg,bar,levelText,dropTileFx,nextLevelFx,rainbow,rainbowText,timedEventRainbow,shuffle,timedEventShuffle){
+    initTiles(selectedTiles,arrTiles,posTiles,scoreText,initScore,length,startPoint,hpbarbg,bar,levelText,dropTileFx,nextLevelFx,
+        rainbow,rainbowText,timedEventRainbow,shuffle,timedEventShuffle,monsterHp){
         dropTileFx.play();
+        var init;
+        if(parseInt(levelText.text.slice(-1))%3==0){
+            init=monsterHp[0]
+        }else{
+            init=initScore[0]
+        }
         var emptyPos= new Array();
         for(var tile of posTiles){
             if(arrTiles.find((obj)=>{return obj.x===tile.x&&obj.y===tile.y})===undefined){
@@ -371,20 +393,27 @@ export default class mainScene extends Phaser.Scene{
         
         var scoreRedTween=this.tweens.addCounter({
             from:startPoint[0],
-            to: Math.max(0,startPoint-(length*20)),
+            to: Math.max(0,startPoint[0]-(length*20)),
             duration:500,
             onUpdate:function(this){
                 scoreText.setText(Math.floor(scoreRedTween.getValue()).toString());
-                bar.commandBuffer[3]=hpbarbg.width*(scoreRedTween.getValue()/initScore[0])*3+10;
+                bar.commandBuffer[3]=hpbarbg.width*(scoreRedTween.getValue()/init)*3+10;
             },
             onComplete:function(this){
                 if(scoreRedTween.getValue()===0){
-                    initScore[0]=initScore[0]*2;
-                    scoreText.setText(initScore[0]);
-                    startPoint[0]=initScore[0];
                     levelText.text="Level "+(parseInt(levelText.text.slice(-1))+1).toString();
                     nextLevelFx.play();
-                    scoreAddTween.resume();
+                    if(parseInt(levelText.text.slice(-1))%3==0){
+                        scoreText.setText(monsterHp[0]);
+                        startPoint[0]=monsterHp[0];
+                        monsterHp[0]=monsterHp[0]*3;
+                        scoreAddTweenMonster.resume();
+                    }else{
+                        initScore[0]=initScore[0]*2;
+                        scoreText.setText(initScore[0]);
+                        startPoint[0]=initScore[0];
+                        scoreAddTween.resume(); 
+                    }
                 }else{
                     startPoint[0]=scoreRedTween.getValue();
                 }
@@ -392,12 +421,22 @@ export default class mainScene extends Phaser.Scene{
         });
         var scoreAddTween=this.tweens.addCounter({
             from:0,
-            to: initScore[0]*2,
+            to:initScore[0]*2,
             duration:500,
             paused:true,
             onUpdate:function(this){
                 scoreText.setText(Math.floor(scoreAddTween.getValue()).toString());
                 bar.commandBuffer[3]=(hpbarbg.width*scoreAddTween.progress)*3-10;
+            },
+        });
+        var scoreAddTweenMonster=this.tweens.addCounter({
+            from:0,
+            to:monsterHp[0],
+            duration:500,
+            paused:true,
+            onUpdate:function(this){
+                scoreText.setText(Math.floor(scoreAddTweenMonster.getValue()).toString());
+                bar.commandBuffer[3]=(hpbarbg.width*scoreAddTweenMonster.progress)*3-10;
             },
         });
     }
