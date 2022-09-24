@@ -269,7 +269,7 @@ export default class mainScene extends Phaser.Scene{
             }
     }
     update(time: number, delta: number): void {
-        if(this.levelText.text.slice(-1)%3===0){
+        if(this.levelText.text.slice(-2)%5===0){
             this.monsterSprite.visible=true;
             this.bar.fillStyle(0xA020F0);
            
@@ -287,6 +287,9 @@ export default class mainScene extends Phaser.Scene{
                 this.selectTilesCheck(value,selectedTiles);
             }
             if(selectedTiles.length>=3){
+                for(var tile of this.arrTiles.list){
+                    tile.disableInteractive();
+                }
                 this.getPointFx.play();
                 this.dropTiles(selectedTiles,this.arrTiles.list,this.rainbow,this.timedEventRainbow,this.coolDownTextRainbow,this.shuffle);
                 timerEvent = this.time.delayedCall(1100, this.initTiles, [selectedTiles,this.arrTiles.list,this.posTiles,this.scoreText,this.initScore,
@@ -352,7 +355,7 @@ export default class mainScene extends Phaser.Scene{
         rainbow,rainbowText,timedEventRainbow,shuffle,timedEventShuffle,monsterHp){
         dropTileFx.play();
         var init;
-        if(parseInt(levelText.text.slice(-1))%3==0){
+        if(parseInt(levelText.text.slice(-2))%5==0){
             init=monsterHp[0]
         }else{
             init=initScore[0]
@@ -401,9 +404,9 @@ export default class mainScene extends Phaser.Scene{
             },
             onComplete:function(this){
                 if(scoreRedTween.getValue()===0){
-                    levelText.text="Level "+(parseInt(levelText.text.slice(-1))+1).toString();
+                    levelText.text="Level "+(parseInt(levelText.text.slice(-2))+1).toString();
                     nextLevelFx.play();
-                    if(parseInt(levelText.text.slice(-1))%3==0){
+                    if(parseInt(levelText.text.slice(-2))%5==0){
                         scoreText.setText(monsterHp[0]);
                         startPoint[0]=monsterHp[0];
                         monsterHp[0]=monsterHp[0]*3;
@@ -416,6 +419,9 @@ export default class mainScene extends Phaser.Scene{
                     }
                 }else{
                     startPoint[0]=scoreRedTween.getValue();
+                    for(var tile of arrTiles){
+                        tile.setInteractive();
+                    }
                 }
             },
         });
@@ -428,6 +434,11 @@ export default class mainScene extends Phaser.Scene{
                 scoreText.setText(Math.floor(scoreAddTween.getValue()).toString());
                 bar.commandBuffer[3]=(hpbarbg.width*scoreAddTween.progress)*3-10;
             },
+            onComplete:function(this){
+                for(var tile of arrTiles){
+                    tile.setInteractive();
+                }
+            }
         });
         var scoreAddTweenMonster=this.tweens.addCounter({
             from:0,
@@ -438,6 +449,11 @@ export default class mainScene extends Phaser.Scene{
                 scoreText.setText(Math.floor(scoreAddTweenMonster.getValue()).toString());
                 bar.commandBuffer[3]=(hpbarbg.width*scoreAddTweenMonster.progress)*3-10;
             },
+            onComplete:function(this){
+                for(var tile of arrTiles){
+                    tile.setInteractive();
+                }
+            }
         });
     }
 }
